@@ -28,7 +28,7 @@ public class JwtService {
     }
 
     /**
-     * token
+     * token方法解析
      */
     public Claims parsePersonJWT(String personToken) {
         Claims claims = jwtUtils.parseJWT(personToken, this.base64Security);
