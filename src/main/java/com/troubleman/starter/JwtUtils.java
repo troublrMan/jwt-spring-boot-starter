@@ -1,16 +1,16 @@
 package com.troubleman.starter;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.JWTVerifier;
-import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.interfaces.Claim;
-import com.auth0.jwt.interfaces.DecodedJWT;
-import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtBuilder;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 
-import java.io.UnsupportedEncodingException;
-import java.util.Calendar;
+import javax.crypto.spec.SecretKeySpec;
+import javax.xml.bind.DatatypeConverter;
+import java.security.Key;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -20,86 +20,45 @@ import java.util.Map;
  */
 public class JwtUtils {
 
-    /**
-     * APP登录Token的生成和解析
-     *
-     */
-
-    /**
-     * token秘钥，请勿泄露，请勿随便修改
-     * <p>
-     * 建议配置在配置文件中
-     */
-    public static final String SECRET = "JKKLJOoasdlfj";
-    /**
-     * token 过期时间: 10天
-     */
-    public static final int calendarField = Calendar.DATE;
-    public static final int calendarInterval = 10;
-
-    /**
-     * JWT生成Token.<br/>
-     * <p>
-     * JWT构成: header, payload, signature
-     *
-     * @param user_id 登录成功后用户user_id, 参数user_id不可传空
-     */
-    public static String createToken(Long user_id) throws Exception {
-        Date iatDate = new Date();
-        // expire time
-        Calendar nowTime = Calendar.getInstance();
-        nowTime.add(calendarField, calendarInterval);
-        Date expiresDate = nowTime.getTime();
-
-        // header Map
-        Map<String, Object> map = new HashMap();
-        map.put("alg", "HS256");
-        map.put("typ", "JWT");
-
-        // param backups
-        String token = JWT.create().withHeader(map) // header
-                .withClaim("iss", "Service") // payload
-                .withClaim("aud", "APP").withClaim("user_id", null == user_id ? null : user_id.toString())
-                .withIssuedAt(iatDate) // sign time
-                .withExpiresAt(expiresDate) // expire time
-                .sign(Algorithm.HMAC256(SECRET)); // signature
-
-        return token;
-    }
-
-    /**
-     * 解密Token
-     *
-     * @param token
-     * @return
-     * @throws Exception
-     */
-    public static Map<String, Claim> verifyToken(String token) {
-        DecodedJWT jwt = null;
+    // 加密方法
+    public Claims parseJWT(String jsonWebToken, String base64Security) {
         try {
-            JWTVerifier verifier = JWT.require(Algorithm.HMAC256(SECRET)).build();
-            jwt = verifier.verify(token);
-        } catch (ExpiredJwtException e) {
-            //过期异常处理
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+            Claims claims = Jwts.parser()
+                    .setSigningKey(DatatypeConverter.parseBase64Binary(base64Security))
+                    .parseClaimsJws(jsonWebToken).getBody();
+            return claims;
+        } catch (Exception ex) {
+            return null;
         }
-        return jwt.getClaims();
     }
 
-    /**
-     * 根据Token获取user_id
-     *
-     * @param token
-     * @return user_id
-     */
-    public static Long getAppUID(String token) {
-        Map<String, Claim> claims = verifyToken(token);
-        Claim user_id_claim = claims.get("user_id");
-        if (null == user_id_claim || user_id_claim.asString() == null) {
-            // token 校验失败, 抛出Token验证非法异常
+    // 解密方法
+    public String createJWT(Map map,
+                            String audience, String issuer, long TTLMillis, String base64Security) {
+        SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
+
+        long nowMillis = System.currentTimeMillis();
+        Date now = new Date(nowMillis);
+        //生成签名密钥 就是一个base64加密后的字符串？
+        byte[] apiKeySecretBytes = DatatypeConverter.parseBase64Binary(base64Security);
+        Key signingKey = new SecretKeySpec(apiKeySecretBytes, signatureAlgorithm.getJcaName());
+        //添加构成JWT的参数
+        JwtBuilder builder = Jwts.builder().setHeaderParam("typ", "JWT")
+                .setIssuedAt(now)  //创建时间
+                .setSubject(map.toString()) //主题，也差不多是个人的一些信息
+                .setIssuer(issuer) //发送谁
+                .setAudience(audience) //个人签名
+                .signWith(signatureAlgorithm, signingKey);  //估计是第三段密钥
+        if (TTLMillis >= 0) {
+            // 过期时间
+            long expMillis = nowMillis + TTLMillis;
+            // 现在是什么时间
+            Date exp = new Date(expMillis);
+            // 系统时间之前的token都是不可以被承认的
+            builder.setExpiration(exp).setNotBefore(now);
         }
-        return Long.valueOf(user_id_claim.asString());
+        //生成JWT
+        return builder.compact();
     }
 
 
