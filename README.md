@@ -15,9 +15,9 @@ body={sub=testUsername, exp=1510886546}
 ## starter是什么？
 在springboot中，使用的最多的就是starter。starter可以理解为一个可拔插式的插件，例如，你想使用jdbc插件，那么可以使用spring-boot-starter-jdbc；如果想使用mongodb，可以使用spring-boot-starter-data-mongodb。 自定义starter
 ## 我的starter样式
-1.SpringBoot 在启动时会去依赖的starter包中寻找 resources/META-INF/spring.factories 文件，然后根据文件中配置的Jar包去扫描项目所依赖的Jar包，这类似于 Java 的 SPI 机制。
-2.根据 spring.factories配置加载AutoConfigure类。
-3.创建Spring boot项目添加依赖
+1. SpringBoot 在启动时会去依赖的starter包中寻找 resources/META-INF/spring.factories 文件，然后根据文件中配置的Jar包去扫描项目所依赖的Jar包，这类似于 Java 的 SPI 机制。
+2. 根据 spring.factories配置加载AutoConfigure类。
+3. 创建Spring boot项目添加依赖
 ```
 <groupId>troubleMan</groupId>
 <artifactId>jwt-spring-boot-starter</artifactId>
@@ -35,8 +35,8 @@ body={sub=testUsername, exp=1510886546}
 </dependencies>
 
 ```
-4.JwtUtils
-jwt的具体实现
-5.JwtAutoConfiguration
-jwt自动装配类（最重要的类，没有此类，spring boot不会自动扫描jar）
+4. JwtUtils
+ jwt的具体实现
+5. JwtAutoConfiguration
+ jwt自动装配类（最重要的类，没有此类，spring boot不会自动扫描jar）
 
