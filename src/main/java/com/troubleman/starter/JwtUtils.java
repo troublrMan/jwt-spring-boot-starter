@@ -4,8 +4,6 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.stereotype.Component;
 
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
@@ -48,7 +46,7 @@ public class JwtUtils {
                 .setSubject(map.toString()) //主题，也差不多是个人的一些信息
                 .setIssuer(issuer) //发送谁
                 .setAudience(audience) //个人签名
-                .signWith(signatureAlgorithm, signingKey);  //估计是第三段密钥
+                .signWith(signatureAlgorithm, signingKey);
         if (TTLMillis >= 0) {
             // 过期时间
             long expMillis = nowMillis + TTLMillis;
